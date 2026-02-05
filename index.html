@@ -12,12 +12,10 @@
             body { background: white; }
             #invoice-section { display: block !important; }
         }
-        /* Hide number spinners */
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { 
             -webkit-appearance: none; margin: 0; 
         }
-        /* Loader animation */
         .loader {
             border: 4px solid #f3f3f3; border-top: 4px solid #3498db;
             border-radius: 50%; width: 30px; height: 30px;
@@ -117,10 +115,9 @@
 
 <script>
     // ==========================================
-    // CONFIGURATION: PASTE YOUR GOOGLE SHEET CSV LINK BELOW
+    // YOUR LINK IS ALREADY SET BELOW
     // ==========================================
     const GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXrTyWEN0ALtNLprPeib64_IKvZu3Dl_Gq3QJ61fRbv2KT9nRYG_rDGV7kq3gjOuqO4nSDUJQXcQ3V/pub?output=csv"; 
-    // Example: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR..../pub?output=csv"
     // ==========================================
 
     let adderData = [];
@@ -128,16 +125,8 @@
 
     // --- INITIALIZATION ---
     window.onload = function() {
-        if(GOOGLE_SHEET_CSV_URL === "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXrTyWEN0ALtNLprPeib64_IKvZu3Dl_Gq3QJ61fRbv2KT9nRYG_rDGV7kq3gjOuqO4nSDUJQXcQ3V/pub?output=csv") {
-             // Fallback data if user hasn't pasted link yet so they can see it works
-            adderData = [
-                { name: "DEMO: Enphase Microinverter (Connect Sheet for Real Data)", type: "watt", prices: { OR_WA: 0.25, NM: 0.25, AZ_TX: 0.25 } },
-                { name: "DEMO: Main Panel Upgrade", type: "unit", prices: { OR_WA: 3250, NM: 3250, AZ_TX: 2750 } }
-            ];
-            initializeApp();
-        } else {
-            fetchData();
-        }
+        // DIRECTLY FETCH DATA (No demo checks)
+        fetchData();
     };
 
     function fetchData() {
@@ -163,7 +152,6 @@
             if (!line) continue;
             
             // Handle CSV parsing (simple split by comma)
-            // Note: This simple parser assumes no commas INSIDE the item names.
             const cols = line.split(',');
             
             if (cols.length >= 5) {
@@ -265,7 +253,6 @@
             const qty = parseFloat(qtyInput.value) || 1; 
             let unitPrice = item.prices[state];
             
-            // Safety check for missing price
             if (isNaN(unitPrice)) unitPrice = 0;
 
             let lineTotal = 0;
@@ -314,8 +301,6 @@
         document.getElementById('invoice-section').style.display = 'none';
     }
 
-    // Start with one row
-    // (Data will load async)
 </script>
 </body>
 </html>
