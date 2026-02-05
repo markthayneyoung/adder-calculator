@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar Adder Pricing Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white; }
+            #invoice-section { display: block !important; }
+        }
+        /* Hide number spinners */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; margin: 0; 
+        }
+        /* Loader animation */
+        .loader {
+            border: 4px solid #f3f3f3; border-top: 4px solid #3498db;
+            border-radius: 50%; width: 30px; height: 30px;
+            animation: spin 1s linear infinite; margin: 0 auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans leading-normal tracking-normal text-gray-800">
+
+    <div class="container mx-auto px-4 py-6 max-w-3xl">
+        
+        <div class="bg-white p-6 rounded-lg shadow-md mb-6 no-print">
+            <h1 class="text-2xl font-bold text-gray-800">Adder Pricing Calculator</h1>
+            <p id="connectionStatus" class="text-xs text-gray-400 mt-1">Connecting to database...</p>
+        </div>
+
+        <div id="loadingMessage" class="text-center py-10">
+            <div class="loader mb-4"></div>
+            <p class="text-gray-600">Loading live pricing from Google Sheets...</p>
+        </div>
+
+        <div id="appContent" class="hidden">
+            
+            <div class="bg-white p-6 rounded-lg shadow-md mb-6 no-print">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-gray-700 text-xs font-bold uppercase mb-2">Market / State</label>
+                        <select id="stateSelect" class="w-full border border-gray-300 p-3 rounded bg-gray-50 focus:outline-none focus:border-blue-500">
+                            <option value="OR_WA">Oregon & Washington</option>
+                            <option value="NM">New Mexico</option>
+                            <option value="AZ_TX">Arizona & Texas</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-xs font-bold uppercase mb-2">Total System Size (kW)</label>
+                        <input type="number" id="systemSize" step="0.01" placeholder="e.g. 8.5" class="w-full border border-gray-300 p-3 rounded bg-gray-50 focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-md mb-6 no-print">
+                <h2 class="text-lg font-bold text-gray-800 mb-4">Adders</h2>
+                <div id="lineItemsContainer"></div>
+                
+                <button onclick="addNewRow()" class="mt-4 bg-blue-50 text-blue-700 font-bold py-3 px-4 rounded w-full border border-blue-200 hover:bg-blue-100 transition flex justify-center items-center gap-2">
+                    <span>+</span> Add Another Adder
+                </button>
+            </div>
+
+            <div class="mb-12 no-print text-center">
+                <button onclick="generateInvoice()" class="bg-green-600 text-white font-bold py-4 px-8 rounded shadow-lg hover:bg-green-700 transition w-full md:w-auto transform hover:scale-105 duration-200">
+                    Generate Invoice
+                </button>
+            </div>
+        </div>
+
+        <div id="invoice-section" class="hidden bg-white p-8 shadow-lg max-w-3xl mx-auto border-t-8 border-green-600">
+            <div class="flex justify-between items-start mb-8 border-b pb-6">
+                <div>
+                    <h1 class="text-4xl font-bold text-gray-800 tracking-tight">INVOICE</h1>
+                    <p class="text-gray-500 mt-1" id="invDate">Date: </p>
+                </div>
+                <div class="text-right bg-gray-50 p-4 rounded">
+                    <p class="text-sm text-gray-600">System Size</p>
+                    <p id="invSystemSize" class="font-bold text-xl mb-2">0 kW</p>
+                    <p class="text-sm text-gray-600">Market</p>
+                    <p id="invMarket" class="font-bold text-gray-800">--</p>
+                </div>
+            </div>
+
+            <table class="w-full mb-8 text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-100 border-b-2 border-gray-200">
+                        <th class="py-3 px-4 font-semibold text-gray-600 text-sm uppercase">Description</th>
+                        <th class="py-3 px-4 font-semibold text-gray-600 text-sm uppercase text-right">Unit Price</th>
+                        <th class="py-3 px-4 font-semibold text-gray-600 text-sm uppercase text-right">Basis</th>
+                        <th class="py-3 px-4 font-semibold text-gray-600 text-sm uppercase text-right">Total</th>
+                    </tr>
+                </thead>
+                <tbody id="invoiceBody" class="text-gray-700"></tbody>
+                <tfoot>
+                    <tr class="border-t-2 border-gray-800">
+                        <td colspan="3" class="py-6 px-4 font-bold text-right text-2xl">TOTAL</td>
+                        <td class="py-6 px-4 font-bold text-right text-2xl text-green-700" id="invGrandTotal">$0.00</td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <div class="text-center mt-12 no-print flex justify-center gap-4">
+                <button onclick="window.print()" class="bg-gray-800 text-white font-bold py-2 px-6 rounded hover:bg-gray-700 shadow">Print / Save PDF</button>
+                <button onclick="editInvoice()" class="bg-white border border-gray-300 text-gray-600 font-bold py-2 px-6 rounded hover:bg-gray-50">Go Back</button>
+            </div>
+        </div>
+
+    </div>
+
+<script>
+    // ==========================================
+    // CONFIGURATION: PASTE YOUR GOOGLE SHEET CSV LINK BELOW
+    // ==========================================
+    const GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXrTyWEN0ALtNLprPeib64_IKvZu3Dl_Gq3QJ61fRbv2KT9nRYG_rDGV7kq3gjOuqO4nSDUJQXcQ3V/pub?output=csv"; 
+    // Example: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR..../pub?output=csv"
+    // ==========================================
+
+    let adderData = [];
+    let rowCount = 0;
+
+    // --- INITIALIZATION ---
+    window.onload = function() {
+        if(GOOGLE_SHEET_CSV_URL === "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXrTyWEN0ALtNLprPeib64_IKvZu3Dl_Gq3QJ61fRbv2KT9nRYG_rDGV7kq3gjOuqO4nSDUJQXcQ3V/pub?output=csv") {
+             // Fallback data if user hasn't pasted link yet so they can see it works
+            adderData = [
+                { name: "DEMO: Enphase Microinverter (Connect Sheet for Real Data)", type: "watt", prices: { OR_WA: 0.25, NM: 0.25, AZ_TX: 0.25 } },
+                { name: "DEMO: Main Panel Upgrade", type: "unit", prices: { OR_WA: 3250, NM: 3250, AZ_TX: 2750 } }
+            ];
+            initializeApp();
+        } else {
+            fetchData();
+        }
+    };
+
+    function fetchData() {
+        fetch(GOOGLE_SHEET_CSV_URL)
+            .then(response => response.text())
+            .then(csvText => {
+                parseCSV(csvText);
+                document.getElementById('connectionStatus').innerText = "• Live Pricing Connected";
+                document.getElementById('connectionStatus').classList.add('text-green-600');
+                initializeApp();
+            })
+            .catch(error => {
+                console.error('Error loading sheet:', error);
+                alert("Could not load pricing data. Check your Google Sheet Link.");
+            });
+    }
+
+    function parseCSV(csvText) {
+        const lines = csvText.split('\n');
+        // Skip header (row 0), start at row 1
+        for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+            
+            // Handle CSV parsing (simple split by comma)
+            // Note: This simple parser assumes no commas INSIDE the item names.
+            const cols = line.split(',');
+            
+            if (cols.length >= 5) {
+                adderData.push({
+                    name: cols[0].trim(),
+                    type: cols[1].trim(), // watt, flat, unit, sq, lf
+                    prices: {
+                        OR_WA: parseFloat(cols[2]),
+                        NM: parseFloat(cols[3]),
+                        AZ_TX: parseFloat(cols[4])
+                    }
+                });
+            }
+        }
+    }
+
+    function initializeApp() {
+        document.getElementById('loadingMessage').classList.add('hidden');
+        document.getElementById('appContent').classList.remove('hidden');
+        addNewRow();
+    }
+
+    function formatCurrency(num) {
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
+    }
+
+    function addNewRow() {
+        rowCount++;
+        const container = document.getElementById('lineItemsContainer');
+        const rowId = `row-${rowCount}`;
+
+        let optionsHtml = '<option value="">Select an Adder...</option>';
+        adderData.forEach((item, index) => {
+            optionsHtml += `<option value="${index}">${item.name}</option>`;
+        });
+
+        const rowHtml = `
+            <div id="${rowId}" class="adder-row bg-gray-50 p-3 rounded border border-gray-200 mb-3 flex flex-col md:flex-row gap-3 items-center">
+                <div class="flex-grow w-full">
+                    <select class="adder-select w-full p-3 border border-gray-300 rounded bg-white font-medium text-gray-700 outline-none" onchange="handleItemSelect('${rowId}')">
+                        ${optionsHtml}
+                    </select>
+                </div>
+                <div class="qty-container w-full md:w-32 hidden">
+                    <div class="relative">
+                        <input type="number" class="adder-qty w-full p-3 border border-gray-300 rounded text-center font-bold" value="1" placeholder="Qty">
+                        <span class="qty-label absolute right-3 top-3 text-xs text-gray-400 font-bold uppercase pointer-events-none"></span>
+                    </div>
+                </div>
+                <div class="w-full md:w-auto text-right md:text-center">
+                    <button onclick="removeRow('${rowId}')" class="text-red-400 hover:text-red-600 p-2">Remove</button>
+                </div>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', rowHtml);
+    }
+
+    function removeRow(id) { document.getElementById(id).remove(); }
+
+    function handleItemSelect(rowId) {
+        const row = document.getElementById(rowId);
+        const select = row.querySelector('.adder-select');
+        const qtyContainer = row.querySelector('.qty-container');
+        const qtyLabel = row.querySelector('.qty-label');
+        const index = select.value;
+
+        if (index === "") { qtyContainer.classList.add('hidden'); return; }
+
+        const item = adderData[index];
+        if (item.type === 'watt' || item.type === 'flat') {
+            qtyContainer.classList.add('hidden');
+        } else {
+            qtyContainer.classList.remove('hidden');
+            qtyLabel.innerText = item.type === 'sq' ? "SQ" : (item.type === 'lf' ? "FT" : "QTY");
+            row.querySelector('.adder-qty').focus();
+        }
+    }
+
+    function generateInvoice() {
+        const state = document.getElementById('stateSelect').value;
+        const size = parseFloat(document.getElementById('systemSize').value);
+
+        if (!size || size <= 0) { alert("Please enter a valid System Size (kW)."); return; }
+
+        const rows = document.querySelectorAll('.adder-row');
+        const invoiceBody = document.getElementById('invoiceBody');
+        invoiceBody.innerHTML = '';
+        
+        let grandTotal = 0;
+        let hasItems = false;
+
+        rows.forEach(row => {
+            const select = row.querySelector('.adder-select');
+            const qtyInput = row.querySelector('.adder-qty');
+            if (select.value === "") return; 
+
+            hasItems = true;
+            const item = adderData[select.value];
+            const qty = parseFloat(qtyInput.value) || 1; 
+            let unitPrice = item.prices[state];
+            
+            // Safety check for missing price
+            if (isNaN(unitPrice)) unitPrice = 0;
+
+            let lineTotal = 0;
+            let basisText = "";
+
+            if (item.type === 'watt') {
+                lineTotal = unitPrice * (size * 1000);
+                basisText = `${(size*1000).toLocaleString()} watts`;
+            } else if (item.type === 'flat') {
+                lineTotal = unitPrice;
+                basisText = "Flat Rate";
+            } else {
+                lineTotal = unitPrice * qty;
+                let unitName = item.type === 'sq' ? 'Squares' : (item.type === 'lf' ? 'Feet' : 'Units');
+                basisText = `${qty} ${unitName}`;
+            }
+
+            grandTotal += lineTotal;
+            invoiceBody.insertAdjacentHTML('beforeend', `
+                <tr class="border-b border-gray-100">
+                    <td class="py-4 px-4 font-medium">${item.name}</td>
+                    <td class="py-4 px-4 text-right text-gray-600">${item.type==='watt'?formatCurrency(unitPrice)+'/w':formatCurrency(unitPrice)}</td>
+                    <td class="py-4 px-4 text-right text-gray-600">${basisText}</td>
+                    <td class="py-4 px-4 text-right font-bold">${formatCurrency(lineTotal)}</td>
+                </tr>
+            `);
+        });
+
+        if (!hasItems) { alert("Please add at least one adder."); return; }
+
+        const marketNames = { 'OR_WA': 'Oregon & Washington', 'NM': 'New Mexico', 'AZ_TX': 'Arizona & Texas' };
+        document.getElementById('invMarket').innerText = marketNames[state];
+        document.getElementById('invSystemSize').innerText = size + " kW";
+        document.getElementById('invDate').innerText = "Date: " + new Date().toLocaleDateString();
+        document.getElementById('invGrandTotal').innerText = formatCurrency(grandTotal);
+
+        document.querySelectorAll('.no-print').forEach(el => el.style.display = 'none');
+        document.getElementById('invoice-section').classList.remove('hidden');
+        document.getElementById('invoice-section').style.display = 'block';
+        window.scrollTo(0,0);
+    }
+
+    function editInvoice() {
+        document.querySelectorAll('.no-print').forEach(el => el.style.display = 'block');
+        document.getElementById('invoice-section').classList.add('hidden');
+        document.getElementById('invoice-section').style.display = 'none';
+    }
+
+    // Start with one row
+    // (Data will load async)
+</script>
+</body>
+</html>
