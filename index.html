@@ -3,14 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solar Adder Pricing Tool</title>
+    <title>Infinity Solar Adder Tool</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @media print {
             .no-print { display: none !important; }
             .print-only { display: block !important; }
             body { background: white; }
-            #invoice-section { display: block !important; }
+            #invoice-section { display: block !important; border: none !important; box-shadow: none !important; }
+            /* Ensure logo prints clearly */
+            img { -webkit-print-color-adjust: exact; }
         }
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { 
@@ -28,7 +30,8 @@
 
     <div class="container mx-auto px-4 py-6 max-w-3xl">
         
-        <div class="bg-white p-6 rounded-lg shadow-md mb-6 no-print">
+        <div class="bg-white p-6 rounded-lg shadow-md mb-6 no-print text-center">
+            <img src="logo.JPG" alt="Infinity Solar USA" class="h-24 mx-auto mb-4 object-contain">
             <h1 class="text-2xl font-bold text-gray-800">Adder Pricing Calculator</h1>
             <p id="connectionStatus" class="text-xs text-gray-400 mt-1">Connecting to database...</p>
         </div>
@@ -73,17 +76,21 @@
             </div>
         </div>
 
-        <div id="invoice-section" class="hidden bg-white p-8 shadow-lg max-w-3xl mx-auto border-t-8 border-green-600">
+        <div id="invoice-section" class="hidden bg-white p-8 shadow-lg max-w-3xl mx-auto border-t-8 border-gray-800">
+            
             <div class="flex justify-between items-start mb-8 border-b pb-6">
                 <div>
-                    <h1 class="text-4xl font-bold text-gray-800 tracking-tight">INVOICE</h1>
-                    <p class="text-gray-500 mt-1" id="invDate">Date: </p>
+                    <img src="logo.JPG" alt="Infinity Solar USA" class="h-20 mb-4 object-contain">
+                    <p class="text-gray-500 text-sm" id="invDate">Date: </p>
                 </div>
-                <div class="text-right bg-gray-50 p-4 rounded">
-                    <p class="text-sm text-gray-600">System Size</p>
-                    <p id="invSystemSize" class="font-bold text-xl mb-2">0 kW</p>
-                    <p class="text-sm text-gray-600">Market</p>
-                    <p id="invMarket" class="font-bold text-gray-800">--</p>
+                <div class="text-right">
+                    <h1 class="text-4xl font-bold text-gray-800 tracking-tight mb-2">INVOICE</h1>
+                    <div class="bg-gray-50 p-4 rounded inline-block text-right">
+                        <p class="text-xs text-gray-500 uppercase">System Size</p>
+                        <p id="invSystemSize" class="font-bold text-xl mb-2">0 kW</p>
+                        <p class="text-xs text-gray-500 uppercase">Market</p>
+                        <p id="invMarket" class="font-bold text-gray-800">--</p>
+                    </div>
                 </div>
             </div>
 
@@ -105,9 +112,21 @@
                 </tfoot>
             </table>
 
-            <div class="text-center mt-12 no-print flex justify-center gap-4">
-                <button onclick="window.print()" class="bg-gray-800 text-white font-bold py-2 px-6 rounded hover:bg-gray-700 shadow">Print / Save PDF</button>
-                <button onclick="editInvoice()" class="bg-white border border-gray-300 text-gray-600 font-bold py-2 px-6 rounded hover:bg-gray-50">Go Back</button>
+            <div class="no-print mt-12 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button onclick="window.print()" class="bg-blue-600 text-white font-bold py-3 px-6 rounded hover:bg-blue-700 shadow flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                    Save as PDF
+                </button>
+
+                <button onclick="window.print()" class="bg-gray-800 text-white font-bold py-3 px-6 rounded hover:bg-gray-900 shadow flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0v3H7V4h6zm-8 7.414l2.293 2.293a1 1 0 001.414 0L16 6.414V9a1 1 0 10-2 0v4.586l-2.293-2.293a1 1 0 00-1.414 0L3 18.586V9a1 1 0 10-2 0v2.414z" clip-rule="evenodd" /><path d="M13 12a1 1 0 11-2 0 1 1 0 012 0z" /></svg>
+                    Print Invoice
+                </button>
+                
+                <button onclick="editInvoice()" class="bg-white border-2 border-gray-300 text-gray-600 font-bold py-3 px-6 rounded hover:bg-gray-100 flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" /></svg>
+                    Return to Calculator
+                </button>
             </div>
         </div>
 
@@ -115,7 +134,7 @@
 
 <script>
     // ==========================================
-    // YOUR LINK IS ALREADY SET BELOW
+    // CONFIGURATION
     // ==========================================
     const GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQXrTyWEN0ALtNLprPeib64_IKvZu3Dl_Gq3QJ61fRbv2KT9nRYG_rDGV7kq3gjOuqO4nSDUJQXcQ3V/pub?output=csv"; 
     // ==========================================
@@ -123,9 +142,7 @@
     let adderData = [];
     let rowCount = 0;
 
-    // --- INITIALIZATION ---
     window.onload = function() {
-        // DIRECTLY FETCH DATA (No demo checks)
         fetchData();
     };
 
@@ -146,7 +163,6 @@
 
     function parseCSV(csvText) {
         const lines = csvText.split('\n');
-        // Skip header (row 0), start at row 1
         for (let i = 1; i < lines.length; i++) {
             const line = lines[i].trim();
             if (!line) continue;
