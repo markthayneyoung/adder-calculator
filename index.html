@@ -6,14 +6,23 @@
     <title>Infinity Solar Adder Tool</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* PRINT SPECIFIC STYLES */
         @media print {
             .no-print { display: none !important; }
             .print-only { display: block !important; }
             body { background: white; }
-            #invoice-section { display: block !important; border: none !important; box-shadow: none !important; }
+            #quote-section { 
+                display: block !important; 
+                border: none !important; 
+                box-shadow: none !important; 
+                margin: 0 !important; 
+                padding: 0 !important; 
+            }
             /* Ensure logo prints clearly */
             img { -webkit-print-color-adjust: exact; }
         }
+
+        /* GENERAL STYLES */
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { 
             -webkit-appearance: none; margin: 0; 
@@ -30,20 +39,20 @@
 
     <div class="container mx-auto px-4 py-6 max-w-3xl">
         
-        <div class="bg-white p-6 rounded-lg shadow-md mb-6 no-print text-center">
+        <div id="calculator-header" class="bg-white p-6 rounded-lg shadow-md mb-6 no-print text-center relative">
             <img src="logo.JPG" alt="Infinity Solar USA" class="h-24 mx-auto mb-4 object-contain">
             <h1 class="text-2xl font-bold text-gray-800">Adder Pricing Calculator</h1>
-            <p id="connectionStatus" class="text-xs text-gray-400 mt-1">Connecting to database...</p>
+            <p id="connectionStatus" class="text-xs text-gray-400 mt-1 absolute bottom-2 right-4">Connecting...</p>
         </div>
 
-        <div id="loadingMessage" class="text-center py-10">
+        <div id="loadingMessage" class="text-center py-10 no-print">
             <div class="loader mb-4"></div>
             <p class="text-gray-600">Loading live pricing from Google Sheets...</p>
         </div>
 
-        <div id="appContent" class="hidden">
+        <div id="appContent" class="hidden no-print">
             
-            <div class="bg-white p-6 rounded-lg shadow-md mb-6 no-print">
+            <div class="bg-white p-6 rounded-lg shadow-md mb-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
                         <label class="block text-gray-700 text-xs font-bold uppercase mb-2">Market / State</label>
@@ -60,7 +69,7 @@
                 </div>
             </div>
 
-            <div class="bg-white p-6 rounded-lg shadow-md mb-6 no-print">
+            <div class="bg-white p-6 rounded-lg shadow-md mb-6">
                 <h2 class="text-lg font-bold text-gray-800 mb-4">Adders</h2>
                 <div id="lineItemsContainer"></div>
                 
@@ -69,27 +78,27 @@
                 </button>
             </div>
 
-            <div class="mb-12 no-print text-center">
-                <button onclick="generateInvoice()" class="bg-green-600 text-white font-bold py-4 px-8 rounded shadow-lg hover:bg-green-700 transition w-full md:w-auto transform hover:scale-105 duration-200">
-                    Generate Invoice
+            <div class="mb-12 text-center">
+                <button onclick="generateQuote()" class="bg-green-600 text-white font-bold py-4 px-8 rounded shadow-lg hover:bg-green-700 transition w-full md:w-auto transform hover:scale-105 duration-200">
+                    Generate Quote
                 </button>
             </div>
         </div>
 
-        <div id="invoice-section" class="hidden bg-white p-8 shadow-lg max-w-3xl mx-auto border-t-8 border-gray-800">
+        <div id="quote-section" class="hidden bg-white p-8 shadow-lg max-w-3xl mx-auto border-t-8 border-gray-800">
             
             <div class="flex justify-between items-start mb-8 border-b pb-6">
                 <div>
                     <img src="logo.JPG" alt="Infinity Solar USA" class="h-20 mb-4 object-contain">
-                    <p class="text-gray-500 text-sm" id="invDate">Date: </p>
+                    <p class="text-gray-500 text-sm" id="quoteDate">Date: </p>
                 </div>
                 <div class="text-right">
-                    <h1 class="text-4xl font-bold text-gray-800 tracking-tight mb-2">INVOICE</h1>
+                    <h1 class="text-4xl font-bold text-gray-800 tracking-tight mb-2">QUOTE</h1>
                     <div class="bg-gray-50 p-4 rounded inline-block text-right">
                         <p class="text-xs text-gray-500 uppercase">System Size</p>
-                        <p id="invSystemSize" class="font-bold text-xl mb-2">0 kW</p>
+                        <p id="quoteSystemSize" class="font-bold text-xl mb-2">0 kW</p>
                         <p class="text-xs text-gray-500 uppercase">Market</p>
-                        <p id="invMarket" class="font-bold text-gray-800">--</p>
+                        <p id="quoteMarket" class="font-bold text-gray-800">--</p>
                     </div>
                 </div>
             </div>
@@ -103,31 +112,34 @@
                         <th class="py-3 px-4 font-semibold text-gray-600 text-sm uppercase text-right">Total</th>
                     </tr>
                 </thead>
-                <tbody id="invoiceBody" class="text-gray-700"></tbody>
+                <tbody id="quoteBody" class="text-gray-700"></tbody>
                 <tfoot>
                     <tr class="border-t-2 border-gray-800">
                         <td colspan="3" class="py-6 px-4 font-bold text-right text-2xl">TOTAL</td>
-                        <td class="py-6 px-4 font-bold text-right text-2xl text-green-700" id="invGrandTotal">$0.00</td>
+                        <td class="py-6 px-4 font-bold text-right text-2xl text-green-700" id="quoteGrandTotal">$0.00</td>
                     </tr>
                 </tfoot>
             </table>
 
-            <div class="no-print mt-12 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <button onclick="window.print()" class="bg-blue-600 text-white font-bold py-3 px-6 rounded hover:bg-blue-700 shadow flex items-center justify-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                    Save as PDF
-                </button>
+            <div class="no-print mt-8 pt-6 border-t border-gray-100">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button onclick="window.print()" class="bg-blue-600 text-white font-bold py-3 px-4 rounded hover:bg-blue-700 shadow flex items-center justify-center gap-2 text-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                        Save as PDF
+                    </button>
 
-                <button onclick="window.print()" class="bg-gray-800 text-white font-bold py-3 px-6 rounded hover:bg-gray-900 shadow flex items-center justify-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0v3H7V4h6zm-8 7.414l2.293 2.293a1 1 0 001.414 0L16 6.414V9a1 1 0 10-2 0v4.586l-2.293-2.293a1 1 0 00-1.414 0L3 18.586V9a1 1 0 10-2 0v2.414z" clip-rule="evenodd" /><path d="M13 12a1 1 0 11-2 0 1 1 0 012 0z" /></svg>
-                    Print Invoice
-                </button>
-                
-                <button onclick="editInvoice()" class="bg-white border-2 border-gray-300 text-gray-600 font-bold py-3 px-6 rounded hover:bg-gray-100 flex items-center justify-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" /></svg>
-                    Return to Calculator
-                </button>
+                    <button onclick="window.print()" class="bg-gray-800 text-white font-bold py-3 px-4 rounded hover:bg-gray-900 shadow flex items-center justify-center gap-2 text-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m8-12a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10V5zM9 21h6a2 2 0 002-2v-2H9v2a2 2 0 00-2 2z" /></svg>
+                        Print Quote
+                    </button>
+                    
+                    <button onclick="editQuote()" class="bg-white border-2 border-gray-300 text-gray-600 font-bold py-3 px-4 rounded hover:bg-gray-100 flex items-center justify-center gap-2 text-sm transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                        Return to Calculator
+                    </button>
+                </div>
             </div>
+
         </div>
 
     </div>
@@ -153,11 +165,14 @@
                 parseCSV(csvText);
                 document.getElementById('connectionStatus').innerText = "• Live Pricing Connected";
                 document.getElementById('connectionStatus').classList.add('text-green-600');
+                document.getElementById('connectionStatus').classList.remove('text-gray-400');
                 initializeApp();
             })
             .catch(error => {
                 console.error('Error loading sheet:', error);
                 alert("Could not load pricing data. Check your Google Sheet Link.");
+                document.getElementById('connectionStatus').innerText = "Error Connecting";
+                document.getElementById('connectionStatus').classList.add('text-red-600');
             });
     }
 
@@ -185,7 +200,7 @@
     }
 
     function initializeApp() {
-        document.getElementById('loadingMessage').classList.add('hidden');
+        document.getElementById('loadingMessage').style.display = 'none';
         document.getElementById('appContent').classList.remove('hidden');
         addNewRow();
     }
@@ -246,15 +261,15 @@
         }
     }
 
-    function generateInvoice() {
+    function generateQuote() {
         const state = document.getElementById('stateSelect').value;
         const size = parseFloat(document.getElementById('systemSize').value);
 
         if (!size || size <= 0) { alert("Please enter a valid System Size (kW)."); return; }
 
         const rows = document.querySelectorAll('.adder-row');
-        const invoiceBody = document.getElementById('invoiceBody');
-        invoiceBody.innerHTML = '';
+        const quoteBody = document.getElementById('quoteBody');
+        quoteBody.innerHTML = '';
         
         let grandTotal = 0;
         let hasItems = false;
@@ -287,7 +302,7 @@
             }
 
             grandTotal += lineTotal;
-            invoiceBody.insertAdjacentHTML('beforeend', `
+            quoteBody.insertAdjacentHTML('beforeend', `
                 <tr class="border-b border-gray-100">
                     <td class="py-4 px-4 font-medium">${item.name}</td>
                     <td class="py-4 px-4 text-right text-gray-600">${item.type==='watt'?formatCurrency(unitPrice)+'/w':formatCurrency(unitPrice)}</td>
@@ -300,21 +315,27 @@
         if (!hasItems) { alert("Please add at least one adder."); return; }
 
         const marketNames = { 'OR_WA': 'Oregon & Washington', 'NM': 'New Mexico', 'AZ_TX': 'Arizona & Texas' };
-        document.getElementById('invMarket').innerText = marketNames[state];
-        document.getElementById('invSystemSize').innerText = size + " kW";
-        document.getElementById('invDate').innerText = "Date: " + new Date().toLocaleDateString();
-        document.getElementById('invGrandTotal').innerText = formatCurrency(grandTotal);
+        document.getElementById('quoteMarket').innerText = marketNames[state];
+        document.getElementById('quoteSystemSize').innerText = size + " kW";
+        document.getElementById('quoteDate').innerText = "Date: " + new Date().toLocaleDateString();
+        document.getElementById('quoteGrandTotal').innerText = formatCurrency(grandTotal);
 
-        document.querySelectorAll('.no-print').forEach(el => el.style.display = 'none');
-        document.getElementById('invoice-section').classList.remove('hidden');
-        document.getElementById('invoice-section').style.display = 'block';
+        // Hide calculator, show quote
+        document.getElementById('calculator-header').style.display = 'none';
+        document.getElementById('appContent').style.display = 'none';
+        
+        document.getElementById('quote-section').classList.remove('hidden');
+        document.getElementById('quote-section').style.display = 'block';
         window.scrollTo(0,0);
     }
 
-    function editInvoice() {
-        document.querySelectorAll('.no-print').forEach(el => el.style.display = 'block');
-        document.getElementById('invoice-section').classList.add('hidden');
-        document.getElementById('invoice-section').style.display = 'none';
+    function editQuote() {
+        // Show calculator, hide quote
+        document.getElementById('calculator-header').style.display = 'block';
+        document.getElementById('appContent').style.display = 'block';
+        
+        document.getElementById('quote-section').classList.add('hidden');
+        document.getElementById('quote-section').style.display = 'none';
     }
 
 </script>
